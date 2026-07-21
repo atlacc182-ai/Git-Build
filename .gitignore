@@ -1,0 +1,14 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.log
+outputs/*.exe
+outputs/*.msi
+src/Git-Build.App/bin/
+src/Git-Build.App/obj/
+src/Git-Build.Core/bin/
+src/Git-Build.Core/obj/
+src/Git-Build.Infrastructure/bin/
+src/Git-Build.Infrastructure/obj/
