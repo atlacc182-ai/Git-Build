@@ -1,6 +1,6 @@
 # Git-Build
 
-Git-Build is a Windows desktop Git repository build manager. Paste a public Git repository URL, let Git-Build clone it, detect the build system, confirm dependency steps, build the project, stream live logs, explain build failures in plain English, and open resulting binaries.
+Git-Build is a Windows desktop Git repository build manager. Upload the source code from a local folder, let Git-Build clone it, detect the build system, confirm dependency steps, build the project, stream live logs, explain build failures in plain English, and open resulting binaries.
 
 ## Supported Build Systems
 
