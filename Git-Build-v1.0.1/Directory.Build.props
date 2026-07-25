@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Company>Git-Build</Company>
+    <Product>Git-Build</Product>
+    <Authors>Git-Build</Authors>
+    <RepositoryUrl>https://github.com/git-build/Git-Build</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/git-build/Git-Build</PackageProjectUrl>
+    <Copyright>Copyright (c) 2026 Git-Build</Copyright>
+  </PropertyGroup>
+</Project>

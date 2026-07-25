@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Git-Build.Core/Git-Build.Core.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Git-Build.Infrastructure</AssemblyName>
+    <RootNamespace>GitBuild.Infrastructure</RootNamespace>
+    <Description>Infrastructure services for Git-Build.</Description>
+  </PropertyGroup>
+</Project>
