@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Git-Build.Core</AssemblyName>
+    <RootNamespace>GitBuild.Core</RootNamespace>
+    <Description>Core domain contracts and models for Git-Build.</Description>
+  </PropertyGroup>
+</Project>
