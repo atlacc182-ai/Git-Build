@@ -7,7 +7,7 @@ public sealed class ProcessRunner
 {
     public async Task<int> RunAsync(CommandSpec command, IProgress<BuildEvent> progress, CancellationToken cancellationToken)
     {
-        progress.Report(new BuildEvent(DateTimeOffset.Now, $"> {command.DisplayName}: {command.FileName} {command.Arguments}"));
+        progress.Report(new BuildEvent(DateTimeOffset.Now, $"> {command.DisplayName}: {FormatCommandForLog(command)}"));
 
         try
         {
@@ -103,6 +103,20 @@ public sealed class ProcessRunner
     }
 
     private static string QuoteForCmd(string value) => value.Contains(' ') ? "\"" + value + "\"" : value;
+
+    private static string FormatCommandForLog(CommandSpec command)
+    {
+        if (IsPowerShell(command.FileName) && command.Arguments.Contains("-Command", StringComparison.OrdinalIgnoreCase))
+        {
+            return "PowerShell task";
+        }
+
+        var text = string.IsNullOrWhiteSpace(command.Arguments)
+            ? command.FileName
+            : $"{command.FileName} {command.Arguments}";
+
+        return text.Length <= 160 ? text : text[..157] + "...";
+    }
 
     private static void ReportLines(string text, IProgress<BuildEvent> progress, bool isError)
     {
