@@ -15,6 +15,7 @@ Git-Build is a Windows desktop Git repository build manager. Paste a public Git 
 - The contributers and creators of Git-Build take NO responsibility if you install a harmfull repository/project,
 - The program itself isnot a virus
 - Use responsibly
+- Please note Git-Build may activate some antiviruses this is completely a false positive and the app is safe
 
 ## Project Layout
 
