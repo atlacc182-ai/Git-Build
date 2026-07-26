@@ -47,8 +47,17 @@ public sealed class MainForm : Form
     private readonly Button _minimizeWindowButton = new();
     private readonly Button _maximizeWindowButton = new();
     private readonly Button _closeWindowButton = new();
+    private readonly Panel _activityBar = new();
     private readonly System.Windows.Forms.Timer _pulseTimer = new();
+    private readonly System.Windows.Forms.Timer _ambientTimer = new();
+    private readonly System.Windows.Forms.Timer _startupFadeTimer = new();
+    private readonly System.Windows.Forms.Timer _buildDotsTimer = new();
+    private readonly System.Windows.Forms.Timer _logFlashTimer = new();
     private int _pulseStep;
+    private int _ambientStep;
+    private int _buildDotsStep;
+    private int _logFlashStep;
+    private bool _animationsEnabled = true;
     private const int ResizeGripSize = 8;
     private CancellationTokenSource? _cancellation;
     private string _latestRepositoryPath = "";
@@ -198,6 +207,14 @@ public sealed class MainForm : Form
         Theme.UseGreenBlack();
         _pulseTimer.Interval = 60;
         _pulseTimer.Tick += (_, _) => PulseActiveSurfaces();
+        _ambientTimer.Interval = 45;
+        _ambientTimer.Tick += (_, _) => AnimateAmbientGlow();
+        _startupFadeTimer.Interval = 15;
+        _startupFadeTimer.Tick += (_, _) => AnimateStartupFade();
+        _buildDotsTimer.Interval = 420;
+        _buildDotsTimer.Tick += (_, _) => AnimateBuildDots();
+        _logFlashTimer.Interval = 35;
+        _logFlashTimer.Tick += (_, _) => AnimateLogFlash();
 
         BuildLayout();
     }
@@ -233,7 +250,7 @@ public sealed class MainForm : Form
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 2,
+                RowCount = 3,
                 BackColor = Theme.Background
             };
             appShell.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));
@@ -266,6 +283,7 @@ public sealed class MainForm : Form
             };
             input.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
             input.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            input.RowStyles.Add(new RowStyle(SizeType.Absolute, 5));
         input.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             input.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 82));
             input.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 84));
@@ -339,6 +357,11 @@ public sealed class MainForm : Form
         input.Controls.Add(_browseButton, 3, 1);
         input.Controls.Add(_foldersButton, 4, 1);
         input.Controls.Add(_aboutButton, 5, 1);
+        _activityBar.Dock = DockStyle.Fill;
+        _activityBar.Margin = new Padding(0, 4, 0, 0);
+        _activityBar.BackColor = Theme.Accent;
+        input.Controls.Add(_activityBar, 0, 2);
+        input.SetColumnSpan(_activityBar, 6);
         root.Controls.Add(input, 0, 0);
 
         var statusPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
@@ -358,6 +381,10 @@ public sealed class MainForm : Form
         _logBox.ReadOnly = true;
         _logBox.BackColor = Theme.LogSurface;
         _logBox.ForeColor = Theme.Text;
+        if (!_logFlashTimer.Enabled)
+        {
+            _logBox.BackColor = Theme.LogSurface;
+        }
         _logBox.Font = UiFonts.Mono(9.5f);
         _logBox.BorderStyle = BorderStyle.None;
         _logBox.HideSelection = false;
@@ -583,6 +610,7 @@ public sealed class MainForm : Form
         _titleText.TextAlign = ContentAlignment.MiddleLeft;
         _titleText.Font = UiFonts.Semibold(10.5f);
         _titleText.ForeColor = Theme.Text;
+        _activityBar.BackColor = Theme.Accent;
         _titleText.BackColor = Theme.Header;
         _titleText.MouseDown += TitleBar_MouseDown;
         _titleText.DoubleClick += (_, _) => ToggleMaximize();
@@ -649,6 +677,15 @@ public sealed class MainForm : Form
         }
     }
 
+    protected override void OnFormClosed(FormClosedEventArgs e)
+    {
+        _startupFadeTimer.Stop();
+        _buildDotsTimer.Stop();
+        _logFlashTimer.Stop();
+        _pulseTimer.Stop();
+        base.OnFormClosed(e);
+    }
+
     protected override void WndProc(ref Message m)
     {
         const int wmNchittest = 0x84;
@@ -687,6 +724,21 @@ public sealed class MainForm : Form
     {
         base.OnHandleCreated(e);
         ApplyModernWindowEffects();
+    }
+
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+        if (_animationsEnabled)
+        {
+            Opacity = 0;
+            _startupFadeTimer.Start();
+            _ambientTimer.Start();
+        }
+        else
+        {
+            Opacity = 1.0;
+        }
     }
 
     private void ApplyModernWindowEffects()
@@ -896,6 +948,50 @@ public sealed class MainForm : Form
         _titleText.BackColor = pulse;
     }
 
+    private void AnimateStartupFade()
+    {
+        Opacity = Math.Min(1.0, Opacity + 0.08);
+        if (Opacity >= 1.0)
+        {
+            _startupFadeTimer.Stop();
+            Opacity = 1.0;
+        }
+    }
+
+    private void AnimateBuildDots()
+    {
+        _buildDotsStep = (_buildDotsStep + 1) % 4;
+        _detectedLabel.Text = "Build" + new string('.', _buildDotsStep);
+    }
+
+    private void AnimateAmbientGlow()
+    {
+        _ambientStep = (_ambientStep + 1) % 120;
+        var wave = Math.Abs(60 - _ambientStep);
+        var amount = 0.18f + ((60 - wave) / 60f) * 0.62f;
+        _activityBar.BackColor = Blend(Theme.SurfaceAlt, Theme.Accent, amount);
+        _buildButton.FlatAppearance.BorderColor = Blend(Theme.Border, Theme.Accent, amount);
+        _cancelButton.FlatAppearance.BorderColor = _pulseTimer.Enabled ? Blend(Theme.Border, Theme.ErrorText, amount) : Theme.Border;
+
+        if (_pulseTimer.Enabled)
+        {
+            _statusLabel.ForeColor = Blend(Theme.Text, Theme.Accent, amount);
+            _detectedLabel.ForeColor = Blend(Theme.MutedText, Theme.Accent, amount);
+        }
+    }
+
+    private void AnimateLogFlash()
+    {
+        _logFlashStep++;
+        var amount = Math.Max(0f, 0.55f - (_logFlashStep * 0.07f));
+        _logBox.BackColor = Blend(Theme.LogSurface, Theme.Accent, amount);
+        if (_logFlashStep >= 8)
+        {
+            _logFlashTimer.Stop();
+            _logBox.BackColor = Theme.LogSurface;
+        }
+    }
+
     private static Color Blend(Color baseColor, Color accent, float amount)
     {
         amount = Math.Clamp(amount, 0f, 1f);
@@ -903,6 +999,24 @@ public sealed class MainForm : Form
             baseColor.R + (int)((accent.R - baseColor.R) * amount),
             baseColor.G + (int)((accent.G - baseColor.G) * amount),
             baseColor.B + (int)((accent.B - baseColor.B) * amount));
+    }
+
+    private void StopAnimations()
+    {
+        _startupFadeTimer.Stop();
+        _ambientTimer.Stop();
+        _buildDotsTimer.Stop();
+        _logFlashTimer.Stop();
+        _pulseTimer.Stop();
+
+        Opacity = 1.0;
+        _activityBar.BackColor = Theme.SurfaceAlt;
+        _buildButton.FlatAppearance.BorderColor = Theme.Border;
+        _statusLabel.ForeColor = Theme.Text;
+        _detectedLabel.ForeColor = Theme.MutedText;
+        _logBox.BackColor = Theme.LogSurface;
+        _titleBar.BackColor = Theme.Header;
+        _titleText.BackColor = Theme.Header;
     }
 
     private void BuildSettingsTab()
@@ -1164,7 +1278,7 @@ public sealed class MainForm : Form
         options.Controls.Add(CreateOptionSwitchRow("Prefer release builds", "Run release/package commands when available.", true), 0, 1);
         options.Controls.Add(CreateOptionSwitchRow("Keep full command output", "Store complete logs for debugging failed builds.", true), 0, 2);
         options.Controls.Add(CreateOptionSwitchRow("Open artifacts after build", "Open the output folder after a successful build.", false), 0, 3);
-        options.Controls.Add(CreateOptionSwitchRow("Deep artifact scan", "Search more folders for generated binaries.", false), 0, 4);
+        options.Controls.Add(CreateAnimationSwitchRow(), 0, 4);
         options.Controls.Add(CreateOptionSwitchRow("Portable mode", "Keep Git-Build data next to the app when possible.", false), 0, 5);
         right.Controls.Add(options, 0, 2);
 
@@ -1226,6 +1340,50 @@ public sealed class MainForm : Form
             _themeBox.SelectedIndex = themeSelector.SelectedIndex;
         };
         row.Controls.Add(themeSelector, 1, 0);
+        return row;
+    }
+
+    private Control CreateAnimationSwitchRow()
+    {
+        var row = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            BackColor = Theme.Surface
+        };
+        row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 76));
+        row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24));
+        row.Controls.Add(new Label
+        {
+            Text = "Animations\r\nEnable startup fade, build pulse, and log flashes.",
+            Dock = DockStyle.Fill,
+            Font = UiFonts.Semibold(9.5f),
+            ForeColor = Theme.Text,
+            TextAlign = ContentAlignment.MiddleLeft
+        }, 0, 0);
+
+        var checkbox = new CheckBox
+        {
+            Checked = _animationsEnabled,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            BackColor = Theme.Surface,
+            ForeColor = Theme.Accent
+        };
+        checkbox.CheckedChanged += (_, _) =>
+        {
+            _animationsEnabled = checkbox.Checked;
+            if (!_animationsEnabled)
+            {
+                StopAnimations();
+            }
+            else
+            {
+                _ambientTimer.Start();
+                _activityBar.Visible = true;
+            }
+        };
+        row.Controls.Add(checkbox, 1, 0);
         return row;
     }
 
@@ -1522,7 +1680,12 @@ public sealed class MainForm : Form
         _cancellation = new CancellationTokenSource();
         _buildButton.Enabled = false;
         _cancelButton.Enabled = true;
-        _pulseTimer.Start();
+        if (_animationsEnabled)
+        {
+            _pulseTimer.Start();
+            _buildDotsStep = 0;
+            _buildDotsTimer.Start();
+        }
         _artifactGrid.Rows.Clear();
         _explanationBox.Clear();
         _logBox.Clear();
@@ -1653,6 +1816,7 @@ public sealed class MainForm : Form
             _buildButton.Enabled = true;
             _cancelButton.Enabled = false;
             _pulseTimer.Stop();
+            _buildDotsTimer.Stop();
             _titleBar.BackColor = Theme.Header;
             _titleText.BackColor = Theme.Header;
             _cancellation?.Dispose();
@@ -1704,6 +1868,11 @@ public sealed class MainForm : Form
         _logBox.SelectionColor = buildEvent.IsError ? Theme.ErrorText : Theme.Text;
         _logBox.AppendText(buildEvent + Environment.NewLine);
         _logBox.ScrollToCaret();
+        if (_animationsEnabled)
+        {
+            _logFlashStep = 0;
+            _logFlashTimer.Start();
+        }
     }
 
     private void SetStatus(BuildStatus status, string message)

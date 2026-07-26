@@ -12,3 +12,6 @@ src/Git-Build.Core/bin/
 src/Git-Build.Core/obj/
 src/Git-Build.Infrastructure/bin/
 src/Git-Build.Infrastructure/obj/
+# Build artifacts
+artifacts/
+installer/Git-Build.Installer/payload.zips

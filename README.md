@@ -1,6 +1,6 @@
 # Git-Build
 
-Git-Build is a Windows desktop Git repository build manager. Upload the source code from a local folder, let Git-Build clone it, detect the build system, confirm dependency steps, build the project, stream live logs, explain build failures in plain English, and open resulting binaries.
+Git-Build is a Windows desktop Git repository build manager. Paste a public Git repository URL, let Git-Build clone it, detect the build system, confirm dependency steps, build the project, stream live logs, explain build failures in plain English, and open resulting binaries.
 
 ## Supported Build Systems
 
@@ -25,82 +25,22 @@ Git-Build is a Windows desktop Git repository build manager. Upload the source c
 - `installer/Git-Build.iss` contains the Inno Setup installer script.
 - `docs/ARCHITECTURE.md` describes the application architecture.
 
-# Installation
+## Build
 
-## Prerequisites
-
-Before building Git-Build, ensure you have:
-
-- Windows 10 or Windows 11
-- .NET 8 SDK
-- Git
-
----
-
-## Build from Source
-
-### 1. Download the source code
-
-Download the repository as a ZIP file from GitHub or clone it using Git.
-
-### 2. Extract the files
-
-Extract the downloaded ZIP to a folder of your choice.
-
-Example:
-
-```
-D:\Git-Build
+```powershell
+dotnet restore ./Git-Build.sln
+dotnet build ./Git-Build.sln -c Release
 ```
 
-### 3. Open a Command Prompt
+The executable is produced as `Git-Build.exe` under `src/Git-Build.App/bin/Release/net8.0-windows`.
 
-Open the extracted project folder in Command Prompt or Windows Terminal.
+## Runtime Data
 
-### 4. Build the project
+Git-Build stores user data under `%LOCALAPPDATA%/Git-Build`, including `Settings`, `Logs`, and `Repositories`.
 
-Run:
+## Installer
 
-```bash
-dotnet restore
-dotnet build -c Release
-```
-
-### 5. Run Git-Build
-
-After the build completes, launch the application using:
-
-```bash
-RUN-GIT-BUILD.bat
-```
-
-or run the executable directly from:
-
-```
-src\Git-Build.App\bin\Release\net8.0-windows\
-```
-
----
-
-## Quick Start
-
-1. Launch Git-Build.
-2. Click **Browse**.
-3. Select the source code folder of the project you want to build.
-4. Click **Build**.
-5. Wait for the build to finish.
-6. Open the generated executable from the **Artifacts** panel.
-
----
-
-## Troubleshooting
-
-If the build fails:
-
-- Ensure the .NET 8 SDK is installed.
-- Run `dotnet restore` before building.
-- Check the live build log for error details.
-- Git-Build will explain many common build errors automatically.
+Install Inno Setup, publish the app, then compile:
 
 ```powershell
 dotnet publish ./src/Git-Build.App/Git-Build.App.csproj -c Release -r win-x64 --self-contained true

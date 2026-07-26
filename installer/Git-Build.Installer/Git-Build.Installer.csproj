@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Git-Build-Setup</AssemblyName>
+    <RootNamespace>GitBuild.Installer</RootNamespace>
+    <ApplicationIcon>..\..\src\Git-Build.App\Assets\Git-Build.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('payload.zip')">
+    <EmbeddedResource Include="payload.zip" LogicalName="payload.zip" />
+  </ItemGroup>
+</Project>
